@@ -1,0 +1,218 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'moodle/**'
+  pull_request:
+    branches:
+      - main
+      - 'moodle/**'
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} / Moodle ${{ matrix.moodle-branch }} / ${{ matrix.db }}
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Moodle 4.5
+          - php: '8.1'
+            moodle-branch: MOODLE_405_STABLE
+            db: mariadb
+          - php: '8.1'
+            moodle-branch: MOODLE_405_STABLE
+            db: pgsql
+          - php: '8.2'
+            moodle-branch: MOODLE_405_STABLE
+            db: mariadb
+          - php: '8.3'
+            moodle-branch: MOODLE_405_STABLE
+            db: mariadb
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: 'postgres'
+          POSTGRES_HOST_AUTH_METHOD: 'trust'
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+
+      mariadb:
+        image: mariadb:10
+        env:
+          MYSQL_USER: 'root'
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+          MYSQL_CHARACTER_SET_SERVER: 'utf8mb4'
+          MYSQL_COLLATION_SERVER: 'utf8mb4_unicode_ci'
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, zip, gd, pgsql, mysqli, xml, mbstring, intl, xmlrpc, soap, ldap
+          ini-values: max_input_vars=5000, memory_limit=512M
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install moodle-plugin-ci
+        run: |
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
+          echo "$(cd ci/bin; pwd)" >> "$GITHUB_PATH"
+          echo "$(cd ci/vendor/bin; pwd)" >> "$GITHUB_PATH"
+          sudo locale-gen en_AU.UTF-8
+          echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
+
+      - name: Install Moodle
+        run: moodle-plugin-ci install --plugin ./mod/glaaster --db-host=127.0.0.1
+        env:
+          DB: ${{ matrix.db }}
+          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+
+      - name: PHP Lint
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phplint
+
+      - name: PHP Mess Detector
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpmd --rules phpmd.xml
+
+      - name: Moodle Code Checker
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpcs --max-warnings 0
+
+      - name: PHPDoc Checker
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpdoc --max-warnings 0
+
+      - name: Validate
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci validate
+
+      - name: Upgrade savepoints
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci savepoints
+
+      - name: Mustache Lint
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci mustache
+
+      - name: Grunt
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      - name: PHPUnit
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci phpunit --fail-on-warning
+
+      - name: Behat
+        id: behat
+        if: ${{ !cancelled() }}
+        run: moodle-plugin-ci behat --profile chrome --scss-deprecations
+
+      - name: Upload Behat artifacts on failure
+        if: ${{ failure() && steps.behat.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: behat-dump-${{ matrix.php }}-${{ matrix.moodle-branch }}-${{ matrix.db }}
+          path: |
+            moodledata/behat_dump/
+            ci/phpunit.xml
+          retention-days: 7
+
+  build:
+    name: Build ZIP
+    runs-on: ubuntu-22.04
+    needs: test
+    if: ${{ !cancelled() && github.event_name == 'push' }}
+    outputs:
+      zip-name: ${{ steps.build.outputs.zip-name }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version and channel
+        id: version
+        run: |
+          VERSION=$(grep -E '\$plugin->release\s*=' mod/glaaster/version.php | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+          BRANCH="${GITHUB_REF_NAME}"
+          if [[ "$BRANCH" =~ ^moodle/([0-9]+\.[0-9]+)$ ]]; then
+            echo "channel=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "channel=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build ZIP
+        id: build
+        run: |
+          bash scripts/buildzip.sh mod glaaster "${{ steps.version.outputs.version }}" "${{ steps.version.outputs.channel }}"
+          ZIP_NAME=$(ls mod_glaaster_v*.zip | head -1)
+          echo "zip-name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: mod_glaaster_v*.zip
+          retention-days: 30
+
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-22.04
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install zip
+        run: sudo apt-get install -y zip
+
+      - name: Run Semantic Release
+        run: yarn semantic-release
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: 'github-actions[bot]'
+          GIT_AUTHOR_EMAIL: 'github-actions[bot]@users.noreply.github.com'
+          GIT_COMMITTER_NAME: 'github-actions[bot]'
+          GIT_COMMITTER_EMAIL: 'github-actions[bot]@users.noreply.github.com'

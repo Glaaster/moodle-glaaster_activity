@@ -1,0 +1,36 @@
+# Normalize line endings to LF for all text files
+* text=auto eol=lf
+
+# PHP files
+*.php text eol=lf
+
+# JavaScript / JSON
+*.js text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+
+# Web templates
+*.mustache text eol=lf
+*.html text eol=lf
+
+# Styles
+*.css text eol=lf
+*.scss text eol=lf
+
+# Config / data
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+
+# Binary files - no conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.min.js binary
+*.min.js.map binary

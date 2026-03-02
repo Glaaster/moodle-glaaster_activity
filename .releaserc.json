@@ -1,0 +1,70 @@
+{
+    "branches": [
+        "main",
+        {
+            "name": "moodle/4.0",
+            "channel": "4.0",
+            "range": "4.0.x"
+        },
+        {
+            "name": "moodle/4.1",
+            "channel": "4.1",
+            "range": "4.1.x"
+        },
+        {
+            "name": "moodle/4.2",
+            "channel": "4.2",
+            "range": "4.2.x"
+        },
+        {
+            "name": "moodle/4.3",
+            "channel": "4.3",
+            "range": "4.3.x"
+        },
+        {
+            "name": "moodle/4.4",
+            "channel": "4.4",
+            "range": "4.4.x"
+        },
+        {
+            "name": "moodle/4.5",
+            "channel": "4.5",
+            "range": "4.5.x"
+        }
+    ],
+    "plugins": [
+        "@semantic-release/commit-analyzer",
+        [
+            "@semantic-release/exec",
+            {
+                "prepareCmd": "bash scripts/bump-version.sh ${nextRelease.version}"
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "prepareCmd": "bash scripts/buildzip.sh mod glaaster ${nextRelease.version} ${nextRelease.channel}"
+            }
+        ],
+        [
+            "@semantic-release/git",
+            {
+                "assets": [
+                    "mod/glaaster/version.php"
+                ],
+                "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+            }
+        ],
+        [
+            "@semantic-release/github",
+            {
+                "assets": [
+                    {
+                        "path": "mod_glaaster_v*.zip",
+                        "label": "Glaaster LTI activity plugin v${nextRelease.version}"
+                    }
+                ]
+            }
+        ]
+    ]
+}

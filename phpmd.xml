@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<ruleset name="Glaaster PHPMD Ruleset"
+         xmlns="http://pmd.sf.net/ruleset/1.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd"
+         xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd">
+
+    <description>
+        PHPMD ruleset for Glaaster Moodle plugin.
+        Based on moodle-plugin-ci default ruleset, extended to suppress false positives
+        caused by Moodle coding conventions (snake_case, global variables, static access,
+        inherited LTI core complexity).
+    </description>
+
+    <!-- codesize: keep most rules but exclude inherited LTI core complexity -->
+    <rule ref="rulesets/codesize.xml">
+        <!-- Core LTI functions are inherently long; restructuring would break the Moodle API -->
+        <exclude name="ExcessiveMethodLength"/>
+        <exclude name="ExcessiveClassLength"/>
+        <exclude name="ExcessiveParameterList"/>
+        <exclude name="ExcessivePublicCount"/>
+        <exclude name="TooManyPublicMethods"/>
+        <exclude name="TooManyMethods"/>
+        <exclude name="ExcessiveClassComplexity"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NPathComplexity"/>
+        <exclude name="CouplingBetweenObjects"/>
+    </rule>
+
+    <!-- unusedcode: keep UnusedLocalVariable; exclude UnusedFormalParameter because
+         Moodle hook/interface callbacks must match signatures even when params are unused -->
+    <rule ref="rulesets/unusedcode.xml">
+        <exclude name="UnusedFormalParameter"/>
+    </rule>
+
+    <!-- naming: ShortVariable already excluded by moodle-plugin-ci default;
+         also exclude LongVariable (Moodle uses descriptive names by convention) -->
+    <rule ref="rulesets/naming.xml">
+        <exclude name="ShortVariable"/>
+        <exclude name="LongVariable"/>
+        <exclude name="ShortMethodName"/>
+    </rule>
+
+    <!-- design: exclude CountInLoopExpression for service template parsing loops -->
+    <rule ref="rulesets/design.xml">
+        <exclude name="CountInLoopExpression"/>
+    </rule>
+
+    <!-- cleancode: only BooleanArgumentFlag (matches default), exclude the rest
+         which all conflict with Moodle patterns (static access, superglobals, else, imports) -->
+    <rule ref="rulesets/cleancode.xml/BooleanArgumentFlag"/>
+
+</ruleset>

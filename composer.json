@@ -1,0 +1,13 @@
+{
+    "name": "glaaster/glaaster-activity-plugin",
+    "type": "project",
+    "require": {
+        "moodlehq/moodle-cs": "dev-main"
+    },
+    "minimum-stability": "dev",
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
