@@ -9,15 +9,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://gitlab.com/glaaster/software/moodle-plugins/glaaster-activity-plugin.git"
+        "url": "https://github.com/Glaaster/moodle-glaaster_activity.git"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://gitlab.com/glaaster/software/moodle-plugins/glaaster-activity-plugin/issues"
+        "url": "https://github.com/Glaaster/moodle-glaaster_activity/issues"
     },
-    "homepage": "https://gitlab.com/glaaster/software/moodle-plugins/glaaster-activity-plugin#readme",
+    "homepage": "https://github.com/Glaaster/moodle-glaaster_activity#readme",
     "devDependencies": {
         "@babel/core": "7.17.5",
         "@babel/eslint-parser": "^7.21.3",

@@ -1,35 +1,38 @@
 {
     "branches": [
-        "main",
+        {
+            "name": "main",
+            "channel": "main"
+        },
         {
             "name": "moodle/4.0",
             "channel": "4.0",
-            "range": "4.0.x"
+            "prerelease": "4.0"
         },
         {
             "name": "moodle/4.1",
             "channel": "4.1",
-            "range": "4.1.x"
+            "prerelease": "4.1"
         },
         {
             "name": "moodle/4.2",
             "channel": "4.2",
-            "range": "4.2.x"
+            "prerelease": "4.2"
         },
         {
             "name": "moodle/4.3",
             "channel": "4.3",
-            "range": "4.3.x"
+            "prerelease": "4.3"
         },
         {
             "name": "moodle/4.4",
             "channel": "4.4",
-            "range": "4.4.x"
+            "prerelease": "4.4"
         },
         {
             "name": "moodle/4.5",
             "channel": "4.5",
-            "range": "4.5.x"
+            "prerelease": "4.5"
         }
     ],
     "plugins": [
