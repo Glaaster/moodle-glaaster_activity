@@ -2,10 +2,10 @@
 # Glaaster Activity Plugin for Moodle
 
 [![Moodle 4.5+](https://img.shields.io/badge/Moodle-4.5%2B-orange)](https://moodle.org)
-[![PHP 7.4 | 8.0 | 8.1](https://img.shields.io/badge/PHP-7.4%20|%208.0%20|%208.1-blue)](https://php.net)
+[![PHP 8.1 | 8.2 | 8.3](https://img.shields.io/badge/PHP-8.1%20|%208.2%20|%208.3-blue)](https://php.net)
 [![LTI 1.3](https://img.shields.io/badge/LTI-1.3%20Advantage-green)](https://www.imsglobal.org/spec/lti/v1p3/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Latest Release](https://img.shields.io/badge/version-1.2.0-brightgreen)](https://github.com/glaaster/moodle-mod_glaaster/releases)
+[![Latest Release](https://img.shields.io/badge/version-4.5.1-brightgreen)](https://github.com/Glaaster/moodle-glaaster_activity/releases)
 
 The **Glaaster Activity** plugin is a Moodle activity module that integrates [Glaaster](https://glaaster.com) — a collaborative document reader — directly into Moodle courses via LTI 1.3/Advantage. Students can open course files (PDF, Word, PowerPoint, images) in Glaaster with a single click, without leaving Moodle.
 
