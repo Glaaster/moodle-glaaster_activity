@@ -1,5 +1,5 @@
-// .github/commitlint.config.js
-module.exports = {
+// .github/commitlint.config.mjs
+export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'body-max-line-length': [2, 'always', 100],
