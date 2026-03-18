@@ -63,43 +63,35 @@ fi
 cp "$FILE" "${FILE}.backup"
 echo "💾 Backup created: ${FILE}.backup"
 
-# Replace existing $plugin->version = ...;
-# More robust regex to handle various whitespace and formatting
+# Replace $plugin->version = ...;
 if sed -i.tmp -E "s/(\\\$plugin->version[[:space:]]*=[[:space:]]*)[0-9]+([[:space:]]*;)/\1${VERSION_INT}\2/" "$FILE"; then
   rm -f "${FILE}.tmp"
-  echo "✅ File updated successfully"
+  echo "✅ version integer updated"
 else
-  echo "❌ sed command failed"
-  # Restore backup
+  echo "❌ sed command failed (version)"
   mv "${FILE}.backup" "$FILE"
   exit 1
 fi
 
-# Verify the change was made
-NEW_VERSION_LINE=$(grep -E '\$plugin->version\s*=' "$FILE" | head -1)
-if [ -n "$NEW_VERSION_LINE" ]; then
-  echo "📋 New version line: $NEW_VERSION_LINE"
-
-  # Check if the new version is actually in the file
-  if grep -q "$VERSION_INT" "$FILE"; then
-    echo "✅ Version successfully updated to $VERSION_INT"
-
-    # Show the diff for verification
-    echo ""
-    echo "🔄 Changes made:"
-    diff "${FILE}.backup" "$FILE" || true
-
-    # Clean up backup
-    rm -f "${FILE}.backup"
-  else
-    echo "❌ Version update failed - $VERSION_INT not found in file"
-    # Restore backup
-    mv "${FILE}.backup" "$FILE"
-    exit 1
-  fi
+# Replace $plugin->release = '...';
+if sed -i.tmp -E "s/(\\\$plugin->release[[:space:]]*=[[:space:]]*')[^']+(')/\1${SEMVER}\2/" "$FILE"; then
+  rm -f "${FILE}.tmp"
+  echo "✅ release string updated"
 else
-  echo "❌ Could not find version line after update"
-  # Restore backup
+  echo "❌ sed command failed (release)"
+  mv "${FILE}.backup" "$FILE"
+  exit 1
+fi
+
+# Verify both changes
+if grep -q "$VERSION_INT" "$FILE" && grep -q "'${SEMVER}'" "$FILE"; then
+  echo "✅ version.php successfully updated to $VERSION_INT / $SEMVER"
+  echo ""
+  echo "🔄 Changes made:"
+  diff "${FILE}.backup" "$FILE" || true
+  rm -f "${FILE}.backup"
+else
+  echo "❌ Verification failed"
   mv "${FILE}.backup" "$FILE"
   exit 1
 fi

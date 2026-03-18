@@ -10,6 +10,10 @@ jobs:
   danger:
     name: Danger review
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
         with:
